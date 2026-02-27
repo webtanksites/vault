@@ -225,13 +225,22 @@ animate();
 
 /* Proxy Search */
 document.getElementById("searchBtn").onclick = () => {
-    let input = document.getElementById("searchInput").value;
-    if (!input.startsWith("http")) {
+    let input = document.getElementById("searchInput").value.trim();
+    if (!input) return;
+
+    // Fix missing protocol
+    if (!input.startsWith("http://") && !input.startsWith("https://")) {
         input = "https://www.google.com/search?q=" + encodeURIComponent(input);
     }
-    document.getElementById("frame").style.display = "block";
+
+    const encoded = __uv$config.encodeUrl(input);
+    const finalUrl = __uv$config.prefix + encoded;
+
+    const frame = document.getElementById("uv-frame");
+    frame.style.display = "block";
     document.getElementById("launcher").style.display = "none";
-    document.getElementById("frame").src = input;
+
+    frame.src = finalUrl;
 };
 
 function showLauncher() {
