@@ -1,124 +1,78 @@
 <!doctype html>
 <html>
-	<head>
-		<meta charset="utf-8" />
-		<meta
-			name="viewport"
-			content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
-		/>
-		<title>Ultraviolet | Sophisticated Web Proxy</title>
-		<meta
-			name="description"
-			content="Ultraviolet is a highly sophisticated proxy used for evading internet censorship or accessing websites in a controlled sandbox using the power of service-workers. Unblock sites today!"
-		/>
-		<meta
-			name="keywords"
-			content="proxy, web proxy, ultraviolet, service workers, unblock websites, unblock chromebook, free web proxy, proxy list, proxy sites, un block chromebook, online proxy, proxy server, proxysite, proxy youtube, bypass securly, bypass iboss, bypass lightspeed filter, holy unblocker, chromebooks, titanium network, unblock youtube, youtube proxy, unblocked youtube, youtube unblocked"
-		/>
-		<meta
-			name="theme-color"
-			media="(prefers-color-scheme: dark)"
-			content="#434c5e"
-		/>
-		<meta name="googlebot" content="index, follow, snippet" />
-		<link rel="shortcut icon" content="favicon.ico" />
-		<link rel="stylesheet" href="index.css" />
-		
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
+        />
+        <title>Google Classroom</title>
+        <link rel="icon" type="image/x-icon" href="https://ssl.gstatic.com/classroom/favicon.png">
+        
+        <meta name="description" content="Ultraviolet Proxy" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
+        <link rel="stylesheet" href="index.css" />
+        
+        <style>
+            body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; color: white; font-family: sans-serif; }
+            #stars, #stars2 { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; display: block; }
+            #stars { background: transparent url('http://www.script-tutorials.com/demos/171/images/stars.png') repeat top center; z-index: -2; }
+            #stars2 { background: transparent url('http://www.script-tutorials.com/demos/171/images/stars.png') repeat top center; z-index: -1; animation: moveStars 100s linear infinite; }
+            @keyframes moveStars { from { background-position: 0 0; } to { background-position: -10000px 5000px; } }
+            
+            /* Header Bar */
+            #top-bar { position: fixed; top: 0; left: 0; width: 100%; height: 40px; background: rgba(0,0,0,0.8); display: flex; justify-content: space-around; align-items: center; border-bottom: 1px solid #333; z-index: 100; }
+            #top-bar button { background: #222; color: white; border: 1px solid #444; padding: 5px 15px; cursor: pointer; border-radius: 4px; }
+            #top-bar button:hover { background: #444; }
+            
+            /* Iframe */
+            #uv-frame { position: fixed; top: 40px; left: 0; width: 100%; height: calc(100% - 40px); border: none; z-index: 1; }
+        </style>
 
-		<script src="baremux/index.js"></script>
-		<script src="uv/uv.bundle.js"></script>
-		<script src="uv/uv.config.js"></script>
+        <script src="baremux/index.js"></script>
+        <script src="uv/uv.bundle.js"></script>
+        <script src="uv/uv.config.js"></script>
+    </head>
+    <body>
+        <div id="stars"></div>
+        <div id="stars2"></div>
 
-		<script type="application/ld+json">
-			{
-				"@context": "https://schema.org",
-				"@type": "FAQPage",
-				"mainEntity": [
-					{
-						"@type": "Question",
-						"name": "What is Ultraviolet (Web Proxy)?",
-						"acceptedAnswer": {
-							"@type": "Answer",
-							"text": "Highly sophisticated proxy used for evading internet censorship or accessing websites in a controlled sandbox using the power of service-workers and more!"
-						}
-					},
-					{
-						"@type": "Question",
-						"name": "How do I unblock sites using Ultraviolet?",
-						"acceptedAnswer": {
-							"@type": "Answer",
-							"text": "Simply head to an official site featuring Ultraviolet such as Holy Unblocker or Incognito! You can also self-host Ultraviolet on your own web server for maximum privacy."
-						}
-					},
-					{
-						"@type": "Question",
-						"name": "What if Ultraviolet is blocked or not working?",
-						"acceptedAnswer": {
-							"@type": "Answer",
-							"text": "Join the Titanium Network Discord at discord.gg/unblock!"
-						}
-					}
-				]
-			}
-		</script>
-	</head>
+        <div id="top-bar">
+            <button onclick="switchView('proxy')">Proxy</button>
+            <button onclick="switchView('games')">Games</button>
+            <button onclick="cloak()">Cloak Tab</button>
+        </div>
 
-	<body>
-		<div
-			title="Ultraviolet Logo"
-			class="flex-center logo-wrapper header-center"
-		>
-			<img class="logo" src="uv.png" alt="Ultraviolet" />
-			<h1>Ultraviolet | TN</h1>
-		</div>
-		<div class="flex-center desc left-margin">
-			<p>
-				Ultraviolet is highly sophisticated proxy used for evading internet
-				censorship.
-			</p>
-		</div>
+        <iframe id="uv-frame" src="about:blank"></iframe>
 
-		<form id="uv-form" class="flex-center">
-			<input
-				id="uv-search-engine"
-				value="https://www.google.com/search?q=%s"
-				type="hidden"
-			/>
-			<input id="uv-address" type="text" placeholder="Search the web freely" />
-		</form>
-		<div class="desc left-margin">
-			<p id="uv-error"></p>
-			<pre id="uv-error-code"></pre>
-		</div>
-		<footer>
-			<div>
-				<a
-					title="The TitaniumNetwork GitHub organization"
-					href="https://github.com/titaniumnetwork-dev"
-					>TitaniumNetwork</a
-				>
-				<a title="The TitaniumNetwork Discord" href="https://discord.gg/unblock"
-					>Discord</a
-				>
-				<a
-					title="The TompHTTP GitHub organization"
-					href="https://github.com/tomphttp"
-					>TompHTTP</a
-				>
-				<a
-					title="The official deployment repository for Ultraviolet"
-					href="https://github.com/titaniumnetwork-dev/Ultraviolet-App"
-					>GitHub</a
-				>
-				<a title="License information" href="credits.html">Credits</a>
-			</div>
-			<div>
-				<span>Ultraviolet &copy; TN 2023</span>
-			</div>
-		</footer>
-		<iframe style="display: none" id="uv-frame"></iframe>
-		<script src="register-sw.js"></script>
-		<script src="search.js"></script>
-		<script src="index.js"></script>
-	</body>
+        <script>
+            const frame = document.getElementById('uv-frame');
+
+            // Switch between Proxy and Games
+            function switchView(view) {
+                if (view === 'proxy') {
+                    frame.src = 'about:blank'; // Or load your proxy search page here
+                    // To load proxy: frame.src = __uv$config.prefix + __uv$config.encodeUrl('https://google.com');
+                } else if (view === 'games') {
+                    frame.src = 'games.html';
+                }
+            }
+
+            // Tab Cloaking Settings
+            function cloak() {
+                let title = prompt("Enter new tab title", "Google Docs");
+                let icon = prompt("Enter new tab icon URL", "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico");
+                
+                if (title) document.title = title;
+                if (icon) {
+                    let link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+                    link.type = 'image/x-icon';
+                    link.rel = 'shortcut icon';
+                    link.href = icon;
+                    document.getElementsByTagName('head')[0].appendChild(link);
+                }
+            }
+        </script>
+        <script src="register-sw.js"></script>
+    </body>
 </html>
