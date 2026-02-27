@@ -51,8 +51,8 @@
             // Switch between Proxy and Games
             function switchView(view) {
                 if (view === 'proxy') {
-                    frame.src = 'about:blank'; // Or load your proxy search page here
-                    // To load proxy: frame.src = __uv$config.prefix + __uv$config.encodeUrl('https://google.com');
+                    // Update this to your desired proxy entry page
+                    frame.src = 'about:blank'; 
                 } else if (view === 'games') {
                     frame.src = 'games.html';
                 }
@@ -74,5 +74,7 @@
             }
         </script>
         <script src="register-sw.js"></script>
+        <script src="search.js"></script>
+        <script src="index.js"></script>
     </body>
 </html>
