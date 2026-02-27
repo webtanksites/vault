@@ -1,80 +1,266 @@
 <!doctype html>
 <html>
-    <head>
-        <meta charset="utf-8" />
-        <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
-        />
-        <title>Google Classroom</title>
-        <link rel="icon" type="image/x-icon" href="https://ssl.gstatic.com/classroom/favicon.png">
-        
-        <meta name="description" content="Ultraviolet Proxy" />
-        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
-        <link rel="stylesheet" href="index.css" />
-        
-        <style>
-            body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; color: white; font-family: sans-serif; }
-            #stars, #stars2 { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; display: block; }
-            #stars { background: transparent url('http://www.script-tutorials.com/demos/171/images/stars.png') repeat top center; z-index: -2; }
-            #stars2 { background: transparent url('http://www.script-tutorials.com/demos/171/images/stars.png') repeat top center; z-index: -1; animation: moveStars 100s linear infinite; }
-            @keyframes moveStars { from { background-position: 0 0; } to { background-position: -10000px 5000px; } }
-            
-            /* Header Bar */
-            #top-bar { position: fixed; top: 0; left: 0; width: 100%; height: 40px; background: rgba(0,0,0,0.8); display: flex; justify-content: space-around; align-items: center; border-bottom: 1px solid #333; z-index: 100; }
-            #top-bar button { background: #222; color: white; border: 1px solid #444; padding: 5px 15px; cursor: pointer; border-radius: 4px; }
-            #top-bar button:hover { background: #444; }
-            
-            /* Iframe */
-            #uv-frame { position: fixed; top: 40px; left: 0; width: 100%; height: calc(100% - 40px); border: none; z-index: 1; }
-        </style>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vault</title>
 
-        <script src="baremux/index.js"></script>
-        <script src="uv/uv.bundle.js"></script>
-        <script src="uv/uv.config.js"></script>
-    </head>
-    <body>
-        <div id="stars"></div>
-        <div id="stars2"></div>
+<style>
+:root {
+    --glass: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.15);
+    --blur: blur(20px);
+    --accent: #8b5cf6;
+}
 
-        <div id="top-bar">
-            <button onclick="switchView('proxy')">Proxy</button>
-            <button onclick="switchView('games')">Games</button>
-            <button onclick="cloak()">Cloak Tab</button>
-        </div>
+* { box-sizing: border-box; }
 
-        <iframe id="uv-frame" src="about:blank"></iframe>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: #0a0a0f;
+    color: white;
+    overflow: hidden;
+}
 
-        <script>
-            const frame = document.getElementById('uv-frame');
+/* Canvas Background */
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
 
-            // Switch between Proxy and Games
-            function switchView(view) {
-                if (view === 'proxy') {
-                    // Update this to your desired proxy entry page
-                    frame.src = 'about:blank'; 
-                } else if (view === 'games') {
-                    frame.src = 'games.html';
-                }
-            }
+/* Top Navigation */
+#topbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    backdrop-filter: var(--blur);
+    background: var(--glass);
+    border-bottom: 1px solid var(--border);
+}
 
-            // Tab Cloaking Settings
-            function cloak() {
-                let title = prompt("Enter new tab title", "Google Docs");
-                let icon = prompt("Enter new tab icon URL", "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico");
-                
-                if (title) document.title = title;
-                if (icon) {
-                    let link = document.querySelector("link[rel*='icon']") || document.createElement('link');
-                    link.type = 'image/x-icon';
-                    link.rel = 'shortcut icon';
-                    link.href = icon;
-                    document.getElementsByTagName('head')[0].appendChild(link);
-                }
-            }
-        </script>
-        <script src="register-sw.js"></script>
-        <script src="search.js"></script>
-        <script src="index.js"></script>
-    </body>
+.logo {
+    font-weight: bold;
+    font-size: 18px;
+    letter-spacing: 2px;
+}
+
+.nav-buttons button {
+    margin-left: 15px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.nav-buttons button:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Center Launcher */
+#launcher {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    backdrop-filter: var(--blur);
+    background: var(--glass);
+    padding: 40px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    text-align: center;
+    width: 400px;
+}
+
+#searchInput {
+    width: 100%;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.6);
+    color: white;
+    font-size: 16px;
+    outline: none;
+}
+
+#searchBtn {
+    margin-top: 15px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Iframe */
+#frame {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 60px);
+    border: none;
+    display: none;
+}
+
+/* Settings Modal */
+#settingsModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #111;
+    padding: 30px;
+    border-radius: 15px;
+    width: 350px;
+    border: 1px solid var(--border);
+}
+
+select, input[type=range] {
+    width: 100%;
+    margin-top: 10px;
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div id="topbar">
+    <div class="logo">VAULT</div>
+    <div class="nav-buttons">
+        <button onclick="showLauncher()">Proxy</button>
+        <button onclick="loadGames()">Games</button>
+        <button onclick="openSettings()">Settings</button>
+    </div>
+</div>
+
+<div id="launcher">
+    <h2>Search</h2>
+    <input id="searchInput" placeholder="Enter URL or search term">
+    <button id="searchBtn">Launch</button>
+</div>
+
+<iframe id="frame"></iframe>
+
+<div id="settingsModal">
+    <div class="modal-content">
+        <h3>Background Settings</h3>
+
+        <label>Animation Type</label>
+        <select id="bgType">
+            <option value="stars">Stars</option>
+            <option value="snow">Snow</option>
+            <option value="rain">Rain</option>
+        </select>
+
+        <label>Animation Speed</label>
+        <input type="range" id="speedControl" min="1" max="10">
+
+        <br><br>
+        <button onclick="saveSettings()">Save</button>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('bg');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let particles = [];
+let type = localStorage.getItem("bgType") || "stars";
+let speed = localStorage.getItem("bgSpeed") || 3;
+
+function initParticles() {
+    particles = [];
+    for (let i = 0; i < 150; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 3,
+            velocity: Math.random() * speed
+        });
+    }
+}
+
+function animate() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    particles.forEach(p => {
+        ctx.fillStyle = "white";
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+
+        if (type === "stars") p.y += p.velocity * 0.3;
+        if (type === "snow") p.y += p.velocity * 0.6;
+        if (type === "rain") p.y += p.velocity * 2;
+
+        if (p.y > canvas.height) p.y = 0;
+    });
+
+    requestAnimationFrame(animate);
+}
+
+initParticles();
+animate();
+
+/* Proxy Search */
+document.getElementById("searchBtn").onclick = () => {
+    let input = document.getElementById("searchInput").value;
+    if (!input.startsWith("http")) {
+        input = "https://www.google.com/search?q=" + encodeURIComponent(input);
+    }
+    document.getElementById("frame").style.display = "block";
+    document.getElementById("launcher").style.display = "none";
+    document.getElementById("frame").src = input;
+};
+
+function showLauncher() {
+    document.getElementById("launcher").style.display = "block";
+    document.getElementById("frame").style.display = "none";
+}
+
+function loadGames() {
+    document.getElementById("launcher").style.display = "none";
+    document.getElementById("frame").style.display = "block";
+    document.getElementById("frame").src = "games.html";
+}
+
+/* Settings */
+function openSettings() {
+    document.getElementById("settingsModal").style.display = "flex";
+    document.getElementById("bgType").value = type;
+    document.getElementById("speedControl").value = speed;
+}
+
+function saveSettings() {
+    type = document.getElementById("bgType").value;
+    speed = document.getElementById("speedControl").value;
+    localStorage.setItem("bgType", type);
+    localStorage.setItem("bgSpeed", speed);
+    initParticles();
+    document.getElementById("settingsModal").style.display = "none";
+}
+</script>
+
+</body>
 </html>
