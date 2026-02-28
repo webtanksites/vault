@@ -6,225 +6,10 @@
   <title>Vault · ultraviolet proxy</title>
 
   <style>
-    :root {
-      --glass: rgba(255, 255, 255, 0.08);
-      --border: rgba(255, 255, 255, 0.15);
-      --blur: blur(20px);
-      --accent: #8b5cf6;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #0a0a0f;
-      color: white;
-      overflow: hidden;
-    }
-
-    canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: -1;
-    }
-
-    /* top navigation */
-    #topbar {
-      position: fixed;
-      top: 0;
-      width: 100%;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 30px;
-      backdrop-filter: var(--blur);
-      background: var(--glass);
-      border-bottom: 1px solid var(--border);
-      z-index: 10;
-    }
-
-    .logo {
-      font-weight: bold;
-      font-size: 18px;
-      letter-spacing: 2px;
-      background: linear-gradient(135deg, #fff, #c7b9ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .nav-buttons button {
-      margin-left: 15px;
-      background: transparent;
-      border: 1px solid var(--border);
-      color: white;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.2s;
-      font-weight: 500;
-    }
-
-    .nav-buttons button:hover {
-      background: var(--accent);
-      border-color: var(--accent);
-      box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
-    }
-
-    /* center launcher */
-    #launcher {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      backdrop-filter: var(--blur);
-      background: var(--glass);
-      padding: 40px;
-      border-radius: 28px;
-      border: 1px solid var(--border);
-      text-align: center;
-      width: 420px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-      transition: opacity 0.25s ease;
-    }
-
-    #launcher h2 {
-      margin-top: 0;
-      font-weight: 400;
-      letter-spacing: 1px;
-    }
-
-    #uv-form {
-      width: 100%;
-    }
-
-    #uv-address {
-      width: 100%;
-      padding: 15px 20px;
-      border-radius: 40px;
-      border: 1px solid var(--border);
-      background: rgba(10, 10, 20, 0.7);
-      color: white;
-      font-size: 16px;
-      outline: none;
-      backdrop-filter: blur(10px);
-    }
-
-    #uv-address:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
-    }
-
-    #uv-search-engine {
-      display: none; /* Hidden but kept for functionality */
-    }
-
-    #uv-form button {
-      margin-top: 18px;
-      width: 100%;
-      padding: 14px;
-      border-radius: 40px;
-      border: none;
-      background: var(--accent);
-      color: white;
-      font-weight: 600;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.2s;
-      letter-spacing: 0.5px;
-    }
-
-    #uv-form button:hover {
-      background: #9f7aea;
-      transform: scale(1.02);
-    }
-
-    #uv-error {
-      color: #ff6b6b;
-      margin-top: 10px;
-      font-size: 14px;
-    }
-
-    #uv-error-code {
-      display: none;
-    }
-
-    /* iframe – ultraviolet container */
-    #uv-frame {
-      position: fixed;
-      top: 60px;
-      left: 0;
-      width: 100%;
-      height: calc(100% - 60px);
-      border: none;
-      display: none;
-      background: #0b0b12;
-    }
-
-    /* settings modal */
-    #settingsModal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(6px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-    }
-
-    .modal-content {
-      background: #1c1c28;
-      padding: 32px;
-      border-radius: 32px;
-      width: 360px;
-      border: 1px solid var(--border);
-      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.7);
-    }
-
-    .modal-content h3 {
-      margin-top: 0;
-      font-weight: 400;
-      border-left: 4px solid var(--accent);
-      padding-left: 16px;
-    }
-
-    select,
-    input[type="range"] {
-      width: 100%;
-      margin-top: 8px;
-      margin-bottom: 20px;
-      background: #2a2a3a;
-      color: white;
-      border: 1px solid #3f3f5a;
-      border-radius: 40px;
-      padding: 10px 16px;
-      font-size: 15px;
-    }
-
-    .modal-content button {
-      background: var(--accent);
-      border: none;
-      padding: 12px 24px;
-      border-radius: 40px;
-      color: white;
-      font-weight: 600;
-      width: 100%;
-      cursor: pointer;
-      font-size: 16px;
-      transition: 0.2s;
-    }
-
-    .modal-content button:hover {
-      background: #a78bfa;
-    }
+    /* ... (keep all your existing styles) ... */
   </style>
   
-  <!-- Ultraviolet scripts -->
+  <!-- Load UV scripts in correct order -->
   <script src="/uv/uv.bundle.js"></script>
   <script src="/uv/uv.config.js"></script>
   <script src="/baremux/index.js"></script>
@@ -255,85 +40,16 @@
   </div>
 
   <!-- uv iframe: proxy destination -->
-  <iframe id="uv-frame" allowfullscreen></iframe>
+  <iframe id="uv-frame" allow="cross-origin-isolated; fullscreen" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads" allowfullscreen></iframe>
 
   <!-- settings modal -->
   <div id="settingsModal">
-    <div class="modal-content">
-      <h3>background dynamics</h3>
-      <label>animation type</label>
-      <select id="bgType">
-        <option value="stars">🌌 stars</option>
-        <option value="snow">❄️ snow</option>
-        <option value="rain">☔ rain</option>
-      </select>
-
-      <label>speed</label>
-      <input type="range" id="speedControl" min="1" max="10" value="3">
-
-      <br><br>
-      <button onclick="saveSettings()">save & close</button>
-    </div>
+    <!-- ... (keep your settings modal) ... -->
   </div>
 
   <script>
-    // ========== BACKGROUND CANVAS (stars/snow/rain) ==========
-    const canvas = document.getElementById('bg');
-    const ctx = canvas.getContext('2d');
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-
-    let particles = [];
-    let type = localStorage.getItem('bgType') || 'stars';
-    let speed = parseFloat(localStorage.getItem('bgSpeed')) || 3;
-
-    function initParticles() {
-      particles = [];
-      for (let i = 0; i < 140; i++) {
-        particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          size: Math.random() * 3 + 1,
-          velocity: Math.random() * speed * 0.8 + 0.5,
-        });
-      }
-    }
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'white';
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = '#8b5cf6';
-
-      particles.forEach(p => {
-        ctx.fillRect(p.x, p.y, p.size, p.size);
-
-        // behaviour based on type
-        if (type === 'stars') p.y += p.velocity * 0.3;
-        else if (type === 'snow') p.y += p.velocity * 0.6;
-        else if (type === 'rain') p.y += p.velocity * 2.2;
-
-        // wrap around
-        if (p.y > canvas.height) {
-          p.y = 0;
-          p.x = Math.random() * canvas.width;
-        }
-      });
-
-      requestAnimationFrame(animate);
-    }
-
-    initParticles();
-    animate();
-
-    // resize handler
-    window.addEventListener('resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      initParticles();
-    });
+    // ========== BACKGROUND CANVAS ==========
+    // ... (keep your existing background code) ...
 
     // ========== ULTRAVIOLET PROXY SETUP ==========
     const form = document.getElementById("uv-form");
@@ -344,13 +60,46 @@
     const frame = document.getElementById("uv-frame");
     const launcherDiv = document.getElementById("launcher");
 
-    // Register service worker
+    // Wait for UV config to be ready
+    function waitForUVConfig() {
+      return new Promise((resolve) => {
+        if (window.__uv$config) {
+          resolve();
+        } else {
+          // Check every 100ms
+          const interval = setInterval(() => {
+            if (window.__uv$config) {
+              clearInterval(interval);
+              resolve();
+            }
+          }, 100);
+        }
+      });
+    }
+
+    // Register service worker with correct scope
     async function registerSW() {
       try {
-        await navigator.serviceWorker.register('/uv/uv.sw.js', {
-          scope: '/service/'
+        // Unregister any existing service workers first
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let registration of registrations) {
+          await registration.unregister();
+        }
+
+        // Register with the correct scope
+        const registration = await navigator.serviceWorker.register('/uv/uv.sw.js', {
+          scope: '/uv/'  // Must match the service worker location
         });
+        
+        console.log('Service Worker registered with scope:', registration.scope);
+        
+        // Wait for the service worker to be ready
+        await navigator.serviceWorker.ready;
+        console.log('Service Worker is ready');
+        
+        return registration;
       } catch (err) {
+        console.error('Service Worker registration failed:', err);
         throw err;
       }
     }
@@ -360,7 +109,6 @@
       try {
         return new URL(input).toString();
       } catch (err) {
-        // If input is not a valid URL, treat as search query
         return template.replace('%s', encodeURIComponent(input));
       }
     }
@@ -371,34 +119,56 @@
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
 
+      // Disable button while processing
+      const submitBtn = event.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Loading...";
+
       try {
+        // Wait for UV config
+        await waitForUVConfig();
+        
+        // Register service worker
         await registerSW();
-        error.textContent = ""; // Clear any previous errors
-      } catch (err) {
-        error.textContent = "Failed to register service worker.";
-        errorCode.textContent = err.toString();
-        throw err;
-      }
+        error.textContent = "";
+        errorCode.textContent = "";
 
-      const url = search(address.value, searchEngine.value);
+        const url = search(address.value, searchEngine.value);
 
-      // Show frame and hide launcher
-      frame.style.display = "block";
-      launcherDiv.style.display = "none";
-      
-      // Setup Wisp connection
-      let wispUrl = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
-      
-      try {
-        if ((await connection.getTransport()) !== "/epoxy/index.mjs") {
-          await connection.setTransport("/epoxy/index.mjs", [{ wisp: wispUrl }]);
+        // Show frame and hide launcher
+        frame.style.display = "block";
+        launcherDiv.style.display = "none";
+        
+        // Setup Wisp connection
+        let wispUrl = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
+        
+        try {
+          const currentTransport = await connection.getTransport();
+          if (currentTransport !== "/epoxy/index.mjs") {
+            await connection.setTransport("/epoxy/index.mjs", [{ wisp: wispUrl }]);
+          }
+        } catch (err) {
+          console.warn("Transport setup failed, continuing anyway:", err);
         }
+        
+        // Navigate to proxied URL
+        const proxiedUrl = __uv$config.prefix + __uv$config.encodeUrl(url);
+        console.log('Navigating to:', proxiedUrl);
+        frame.src = proxiedUrl;
+        
       } catch (err) {
-        console.warn("Transport setup failed, continuing anyway:", err);
+        error.textContent = "Failed to launch proxy.";
+        errorCode.textContent = err.toString();
+        console.error(err);
+        
+        // Re-enable launcher on error
+        frame.style.display = "none";
+        launcherDiv.style.display = "block";
+      } finally {
+        // Re-enable button
+        submitBtn.disabled = false;
+        submitBtn.textContent = "launch in ultraviolet";
       }
-      
-      // Navigate to proxied URL
-      frame.src = __uv$config.prefix + __uv$config.encodeUrl(url);
     });
 
     // Handle enter key
@@ -410,16 +180,19 @@
     window.showLauncher = function () {
       launcherDiv.style.display = 'block';
       frame.style.display = 'none';
-      frame.src = 'about:blank'; // Clear the frame
-      address.value = ''; // Clear input
+      frame.src = 'about:blank';
+      address.value = '';
     };
 
     window.loadGames = function () {
       launcherDiv.style.display = 'none';
       frame.style.display = 'block';
-      // Proxy a games site through Ultraviolet
-      const gamesUrl = 'https://www.crazygames.com/';
-      frame.src = __uv$config.prefix + __uv$config.encodeUrl(gamesUrl);
+      
+      waitForUVConfig().then(() => {
+        // Proxy a games site through Ultraviolet
+        const gamesUrl = 'https://www.crazygames.com/';
+        frame.src = __uv$config.prefix + __uv$config.encodeUrl(gamesUrl);
+      });
     };
 
     window.openSettings = function () {
@@ -441,6 +214,19 @@
     document.getElementById('settingsModal').addEventListener('click', (e) => {
       if (e.target === document.getElementById('settingsModal')) {
         document.getElementById('settingsModal').style.display = 'none';
+      }
+    });
+
+    // Pre-emptive service worker unregistration on load
+    window.addEventListener('load', async () => {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let registration of registrations) {
+          await registration.unregister();
+          console.log('Unregistered existing service worker');
+        }
+      } catch (err) {
+        console.warn('Error unregistering service workers:', err);
       }
     });
   </script>
