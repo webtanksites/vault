@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vault</title>
+<title>Vault · Ultraviolet Proxy</title>
 
 <style>
 :root {
@@ -44,6 +44,7 @@ canvas {
     backdrop-filter: var(--blur);
     background: var(--glass);
     border-bottom: 1px solid var(--border);
+    z-index: 10;
 }
 
 .logo {
@@ -81,9 +82,10 @@ canvas {
     border: 1px solid var(--border);
     text-align: center;
     width: 400px;
+    z-index: 5;
 }
 
-#searchInput {
+#uv-address {
     width: 100%;
     padding: 15px;
     border-radius: 12px;
@@ -94,7 +96,11 @@ canvas {
     outline: none;
 }
 
-#searchBtn {
+#uv-address:focus {
+    border-color: var(--accent);
+}
+
+#uv-form button {
     margin-top: 15px;
     width: 100%;
     padding: 12px;
@@ -106,8 +112,22 @@ canvas {
     cursor: pointer;
 }
 
+#uv-form button:hover {
+    background: #9f7aea;
+}
+
+#uv-error {
+    color: #ff6b6b;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+#uv-error-code {
+    display: none;
+}
+
 /* Iframe */
-#frame {
+#uv-frame {
     position: fixed;
     top: 60px;
     left: 0;
@@ -115,6 +135,8 @@ canvas {
     height: calc(100% - 60px);
     border: none;
     display: none;
+    background: #0a0a0f;
+    z-index: 1;
 }
 
 /* Settings Modal */
@@ -125,6 +147,7 @@ canvas {
     display: none;
     align-items: center;
     justify-content: center;
+    z-index: 20;
 }
 
 .modal-content {
@@ -138,15 +161,25 @@ canvas {
 select, input[type=range] {
     width: 100%;
     margin-top: 10px;
+    background: #222;
+    color: white;
+    border: 1px solid var(--border);
+    padding: 8px;
+    border-radius: 8px;
 }
 </style>
+
+<!-- Load Ultraviolet scripts -->
+<script src="/uv/uv.bundle.js"></script>
+<script src="/uv/uv.config.js"></script>
+<script src="/baremux/index.js"></script>
 </head>
 <body>
 
 <canvas id="bg"></canvas>
 
 <div id="topbar">
-    <div class="logo">VAULT</div>
+    <div class="logo">✦ VAULT</div>
     <div class="nav-buttons">
         <button onclick="showLauncher()">Proxy</button>
         <button onclick="loadGames()">Games</button>
@@ -155,33 +188,38 @@ select, input[type=range] {
 </div>
 
 <div id="launcher">
-    <h2>Search</h2>
-    <input id="searchInput" placeholder="Enter URL or search term">
-    <button id="searchBtn">Launch</button>
+    <h2>🔍 Search / Proxy</h2>
+    <form id="uv-form">
+        <input type="text" id="uv-address" placeholder="Enter URL or search term..." autocomplete="off">
+        <input type="hidden" id="uv-search-engine" value="https://www.google.com/search?q=%s">
+        <button type="submit">Launch in Ultraviolet</button>
+    </form>
+    <p id="uv-error"></p>
+    <pre id="uv-error-code"></pre>
 </div>
 
-<iframe id="frame"></iframe>
+<iframe id="uv-frame" allow="cross-origin-isolated; fullscreen" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads" allowfullscreen></iframe>
 
 <div id="settingsModal">
     <div class="modal-content">
         <h3>Background Settings</h3>
-
         <label>Animation Type</label>
         <select id="bgType">
-            <option value="stars">Stars</option>
-            <option value="snow">Snow</option>
-            <option value="rain">Rain</option>
+            <option value="stars">🌌 Stars</option>
+            <option value="snow">❄️ Snow</option>
+            <option value="rain">☔ Rain</option>
         </select>
 
         <label>Animation Speed</label>
-        <input type="range" id="speedControl" min="1" max="10">
+        <input type="range" id="speedControl" min="1" max="10" value="3">
 
         <br><br>
-        <button onclick="saveSettings()">Save</button>
+        <button onclick="saveSettings()">Save & Close</button>
     </div>
 </div>
 
 <script>
+// ========== BACKGROUND CANVAS ==========
 const canvas = document.getElementById('bg');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
@@ -189,7 +227,7 @@ canvas.height = window.innerHeight;
 
 let particles = [];
 let type = localStorage.getItem("bgType") || "stars";
-let speed = localStorage.getItem("bgSpeed") || 3;
+let speed = parseFloat(localStorage.getItem("bgSpeed")) || 3;
 
 function initParticles() {
     particles = [];
@@ -197,24 +235,29 @@ function initParticles() {
         particles.push({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
-            size: Math.random() * 3,
-            velocity: Math.random() * speed
+            size: Math.random() * 3 + 1,
+            velocity: Math.random() * speed * 0.5 + 0.5
         });
     }
 }
 
 function animate() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "white";
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = "#8b5cf6";
 
     particles.forEach(p => {
-        ctx.fillStyle = "white";
         ctx.fillRect(p.x, p.y, p.size, p.size);
 
         if (type === "stars") p.y += p.velocity * 0.3;
         if (type === "snow") p.y += p.velocity * 0.6;
         if (type === "rain") p.y += p.velocity * 2;
 
-        if (p.y > canvas.height) p.y = 0;
+        if (p.y > canvas.height) {
+            p.y = 0;
+            p.x = Math.random() * canvas.width;
+        }
     });
 
     requestAnimationFrame(animate);
@@ -223,52 +266,171 @@ function animate() {
 initParticles();
 animate();
 
-/* Proxy Search */
-document.getElementById("searchBtn").onclick = () => {
-    let input = document.getElementById("searchInput").value.trim();
-    if (!input) return;
+// Resize handler
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    initParticles();
+});
 
-    // Fix missing protocol
-    if (!input.startsWith("http://") && !input.startsWith("https://")) {
-        input = "https://www.google.com/search?q=" + encodeURIComponent(input);
+// ========== ULTRAVIOLET PROXY ==========
+const form = document.getElementById("uv-form");
+const address = document.getElementById("uv-address");
+const searchEngine = document.getElementById("uv-search-engine");
+const error = document.getElementById("uv-error");
+const errorCode = document.getElementById("uv-error-code");
+const frame = document.getElementById("uv-frame");
+const launcher = document.getElementById("launcher");
+
+// Wait for UV config to load
+function waitForUVConfig() {
+    return new Promise((resolve) => {
+        if (window.__uv$config) {
+            resolve();
+        } else {
+            const interval = setInterval(() => {
+                if (window.__uv$config) {
+                    clearInterval(interval);
+                    resolve();
+                }
+            }, 100);
+        }
+    });
+}
+
+// Register service worker
+async function registerSW() {
+    try {
+        // Unregister any existing service workers
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let registration of registrations) {
+            await registration.unregister();
+        }
+
+        // Register new service worker
+        const registration = await navigator.serviceWorker.register('/uv/uv.sw.js', {
+            scope: '/uv/'
+        });
+        
+        console.log('Service Worker registered with scope:', registration.scope);
+        await navigator.serviceWorker.ready;
+        console.log('Service Worker is ready');
+        
+        return registration;
+    } catch (err) {
+        console.error('Service Worker registration failed:', err);
+        throw err;
     }
+}
 
-    const encoded = __uv$config.encodeUrl(input);
-    const finalUrl = __uv$config.prefix + encoded;
+// Search utility
+function search(input, template) {
+    try {
+        return new URL(input).toString();
+    } catch (err) {
+        return template.replace('%s', encodeURIComponent(input));
+    }
+}
 
-    const frame = document.getElementById("uv-frame");
-    frame.style.display = "block";
-    document.getElementById("launcher").style.display = "none";
+// Initialize BareMux connection
+const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
 
-    frame.src = finalUrl;
+// Handle form submission
+form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Loading...";
+
+    try {
+        // Wait for UV config
+        await waitForUVConfig();
+        
+        // Register service worker
+        await registerSW();
+        error.textContent = "";
+
+        const url = search(address.value, searchEngine.value);
+
+        // Show frame, hide launcher
+        frame.style.display = "block";
+        launcher.style.display = "none";
+        
+        // Setup Wisp connection
+        const wispUrl = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
+        
+        try {
+            const currentTransport = await connection.getTransport();
+            if (currentTransport !== "/epoxy/index.mjs") {
+                await connection.setTransport("/epoxy/index.mjs", [{ wisp: wispUrl }]);
+            }
+        } catch (err) {
+            console.warn("Transport setup failed:", err);
+        }
+        
+        // Navigate to proxied URL
+        const proxiedUrl = __uv$config.prefix + __uv$config.encodeUrl(url);
+        console.log('Navigating to:', proxiedUrl);
+        frame.src = proxiedUrl;
+        
+    } catch (err) {
+        error.textContent = "Failed to launch proxy.";
+        errorCode.textContent = err.toString();
+        console.error(err);
+        
+        frame.style.display = "none";
+        launcher.style.display = "block";
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Launch in Ultraviolet";
+    }
+});
+
+// Handle enter key
+address.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') form.dispatchEvent(new Event('submit'));
+});
+
+// ========== UI FUNCTIONS ==========
+window.showLauncher = function() {
+    launcher.style.display = "block";
+    frame.style.display = "none";
+    frame.src = "about:blank";
+    address.value = "";
 };
 
-function showLauncher() {
-    document.getElementById("launcher").style.display = "block";
-    document.getElementById("frame").style.display = "none";
-}
+window.loadGames = function() {
+    launcher.style.display = "none";
+    frame.style.display = "block";
+    
+    waitForUVConfig().then(() => {
+        const gamesUrl = "https://www.crazygames.com/";
+        frame.src = __uv$config.prefix + __uv$config.encodeUrl(gamesUrl);
+    });
+};
 
-function loadGames() {
-    document.getElementById("launcher").style.display = "none";
-    document.getElementById("frame").style.display = "block";
-    document.getElementById("frame").src = "games.html";
-}
-
-/* Settings */
-function openSettings() {
+window.openSettings = function() {
     document.getElementById("settingsModal").style.display = "flex";
     document.getElementById("bgType").value = type;
     document.getElementById("speedControl").value = speed;
-}
+};
 
-function saveSettings() {
+window.saveSettings = function() {
     type = document.getElementById("bgType").value;
-    speed = document.getElementById("speedControl").value;
+    speed = parseFloat(document.getElementById("speedControl").value);
     localStorage.setItem("bgType", type);
     localStorage.setItem("bgSpeed", speed);
     initParticles();
     document.getElementById("settingsModal").style.display = "none";
-}
+};
+
+// Close settings when clicking outside
+document.getElementById("settingsModal").addEventListener('click', (e) => {
+    if (e.target === document.getElementById("settingsModal")) {
+        document.getElementById("settingsModal").style.display = "none";
+    }
+});
 </script>
 
 </body>
