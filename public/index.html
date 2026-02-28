@@ -1,275 +1,444 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vault</title>
-
-<style>
-:root {
-    --glass: rgba(255,255,255,0.08);
-    --border: rgba(255,255,255,0.15);
-    --blur: blur(20px);
-    --accent: #8b5cf6;
-}
-
-* { box-sizing: border-box; }
-
-body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background: #0a0a0f;
-    color: white;
-    overflow: hidden;
-}
-
-/* Canvas Background */
-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: -1;
-}
-
-/* Top Navigation */
-#topbar {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 30px;
-    backdrop-filter: var(--blur);
-    background: var(--glass);
-    border-bottom: 1px solid var(--border);
-}
-
-.logo {
-    font-weight: bold;
-    font-size: 18px;
-    letter-spacing: 2px;
-}
-
-.nav-buttons button {
-    margin-left: 15px;
-    background: transparent;
-    border: 1px solid var(--border);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.nav-buttons button:hover {
-    background: var(--accent);
-    border-color: var(--accent);
-}
-
-/* Center Launcher */
-#launcher {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    backdrop-filter: var(--blur);
-    background: var(--glass);
-    padding: 40px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    text-align: center;
-    width: 400px;
-}
-
-#searchInput {
-    width: 100%;
-    padding: 15px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: rgba(0,0,0,0.6);
-    color: white;
-    font-size: 16px;
-    outline: none;
-}
-
-#searchBtn {
-    margin-top: 15px;
-    width: 100%;
-    padding: 12px;
-    border-radius: 12px;
-    border: none;
-    background: var(--accent);
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-/* Iframe */
-#frame {
-    position: fixed;
-    top: 60px;
-    left: 0;
-    width: 100%;
-    height: calc(100% - 60px);
-    border: none;
-    display: none;
-}
-
-/* Settings Modal */
-#settingsModal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    display: none;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    background: #111;
-    padding: 30px;
-    border-radius: 15px;
-    width: 350px;
-    border: 1px solid var(--border);
-}
-
-select, input[type=range] {
-    width: 100%;
-    margin-top: 10px;
-}
-</style>
-</head>
-<body>
-
-<canvas id="bg"></canvas>
-
-<div id="topbar">
-    <div class="logo">VAULT</div>
-    <div class="nav-buttons">
-        <button onclick="showLauncher()">Proxy</button>
-        <button onclick="loadGames()">Games</button>
-        <button onclick="openSettings()">Settings</button>
-    </div>
-</div>
-
-<div id="launcher">
-    <h2>Search</h2>
-    <input id="searchInput" placeholder="Enter URL or search term">
-    <button id="searchBtn">Launch</button>
-</div>
-
-<iframe id="frame"></iframe>
-
-<div id="settingsModal">
-    <div class="modal-content">
-        <h3>Background Settings</h3>
-
-        <label>Animation Type</label>
-        <select id="bgType">
-            <option value="stars">Stars</option>
-            <option value="snow">Snow</option>
-            <option value="rain">Rain</option>
-        </select>
-
-        <label>Animation Speed</label>
-        <input type="range" id="speedControl" min="1" max="10">
-
-        <br><br>
-        <button onclick="saveSettings()">Save</button>
-    </div>
-</div>
-
-<script>
-const canvas = document.getElementById('bg');
-const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let particles = [];
-let type = localStorage.getItem("bgType") || "stars";
-let speed = localStorage.getItem("bgSpeed") || 3;
-
-function initParticles() {
-    particles = [];
-    for (let i = 0; i < 150; i++) {
-        particles.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            size: Math.random() * 3,
-            velocity: Math.random() * speed
-        });
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vault · ultraviolet proxy</title>
+  <style>
+    :root {
+      --glass: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.15);
+      --blur: blur(20px);
+      --accent: #8b5cf6;
     }
-}
 
-function animate() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    * {
+      box-sizing: border-box;
+    }
 
-    particles.forEach(p => {
-        ctx.fillStyle = "white";
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0a0a0f;
+      color: white;
+      overflow: hidden;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+
+    /* top navigation */
+    #topbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      backdrop-filter: var(--blur);
+      background: var(--glass);
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+    }
+
+    .logo {
+      font-weight: bold;
+      font-size: 18px;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #fff, #c7b9ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-buttons button {
+      margin-left: 15px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+      font-weight: 500;
+    }
+
+    .nav-buttons button:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+    }
+
+    /* center launcher */
+    #launcher {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      backdrop-filter: var(--blur);
+      background: var(--glass);
+      padding: 40px;
+      border-radius: 28px;
+      border: 1px solid var(--border);
+      text-align: center;
+      width: 420px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      transition: opacity 0.25s ease;
+    }
+
+    #launcher h2 {
+      margin-top: 0;
+      font-weight: 400;
+      letter-spacing: 1px;
+    }
+
+    #searchInput {
+      width: 100%;
+      padding: 15px 20px;
+      border-radius: 40px;
+      border: 1px solid var(--border);
+      background: rgba(10, 10, 20, 0.7);
+      color: white;
+      font-size: 16px;
+      outline: none;
+      backdrop-filter: blur(10px);
+    }
+
+    #searchInput:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+    }
+
+    #searchBtn {
+      margin-top: 18px;
+      width: 100%;
+      padding: 14px;
+      border-radius: 40px;
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+      letter-spacing: 0.5px;
+    }
+
+    #searchBtn:hover {
+      background: #9f7aea;
+      transform: scale(1.02);
+    }
+
+    /* iframe – ultraviolet container */
+    #frame {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 60px);
+      border: none;
+      display: none;
+      background: #0b0b12;
+    }
+
+    /* settings modal */
+    #settingsModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .modal-content {
+      background: #1c1c28;
+      padding: 32px;
+      border-radius: 32px;
+      width: 360px;
+      border: 1px solid var(--border);
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-content h3 {
+      margin-top: 0;
+      font-weight: 400;
+      border-left: 4px solid var(--accent);
+      padding-left: 16px;
+    }
+
+    select,
+    input[type="range"] {
+      width: 100%;
+      margin-top: 8px;
+      margin-bottom: 20px;
+      background: #2a2a3a;
+      color: white;
+      border: 1px solid #3f3f5a;
+      border-radius: 40px;
+      padding: 10px 16px;
+      font-size: 15px;
+    }
+
+    .modal-content button {
+      background: var(--accent);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 40px;
+      color: white;
+      font-weight: 600;
+      width: 100%;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+
+    .modal-content button:hover {
+      background: #a78bfa;
+    }
+  </style>
+  <!-- Ultraviolet superstructure (lib + config) -->
+  <script src="/uv/uv.bundle.js"></script>
+  <script src="/uv/uv.config.js"></script>
+</head>
+
+<body>
+  <canvas id="bg"></canvas>
+
+  <div id="topbar">
+    <div class="logo">✦ VAULT</div>
+    <div class="nav-buttons">
+      <button onclick="showLauncher()">Proxy</button>
+      <button onclick="loadGames()">Games</button>
+      <button onclick="openSettings()">Settings</button>
+    </div>
+  </div>
+
+  <!-- main proxy launcher panel -->
+  <div id="launcher">
+    <h2>🔍 search / proxy</h2>
+    <input id="searchInput" type="text" placeholder="enter url or search...">
+    <button id="searchBtn">launch in ultraviolet</button>
+  </div>
+
+  <!-- uv iframe: proxy destination -->
+  <iframe id="frame" allowfullscreen></iframe>
+
+  <!-- settings modal -->
+  <div id="settingsModal">
+    <div class="modal-content">
+      <h3>background dynamics</h3>
+      <label>animation type</label>
+      <select id="bgType">
+        <option value="stars">🌌 stars</option>
+        <option value="snow">❄️ snow</option>
+        <option value="rain">☔ rain</option>
+      </select>
+
+      <label>speed</label>
+      <input type="range" id="speedControl" min="1" max="10" value="3">
+
+      <br><br>
+      <button onclick="saveSettings()">save & close</button>
+    </div>
+  </div>
+
+  <script>
+    // ========== BACKGROUND CANVAS (stars/snow/rain) ==========
+    const canvas = document.getElementById('bg');
+    const ctx = canvas.getContext('2d');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    let particles = [];
+    let type = localStorage.getItem('bgType') || 'stars';
+    let speed = parseFloat(localStorage.getItem('bgSpeed')) || 3;
+
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < 140; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 3 + 1,
+          velocity: Math.random() * speed * 0.8 + 0.5,
+        });
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'white';
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#8b5cf6';
+
+      particles.forEach(p => {
         ctx.fillRect(p.x, p.y, p.size, p.size);
 
-        if (type === "stars") p.y += p.velocity * 0.3;
-        if (type === "snow") p.y += p.velocity * 0.6;
-        if (type === "rain") p.y += p.velocity * 2;
+        // behaviour based on type
+        if (type === 'stars') p.y += p.velocity * 0.3;
+        else if (type === 'snow') p.y += p.velocity * 0.6;
+        else if (type === 'rain') p.y += p.velocity * 2.2;
 
-        if (p.y > canvas.height) p.y = 0;
-    });
+        // wrap around
+        if (p.y > canvas.height) {
+          p.y = 0;
+          p.x = Math.random() * canvas.width;
+        }
+      });
 
-    requestAnimationFrame(animate);
-}
-
-initParticles();
-animate();
-
-/* Proxy Search */
-document.getElementById("searchBtn").onclick = () => {
-    let input = document.getElementById("searchInput").value.trim();
-    if (!input) return;
-
-    // Fix missing protocol
-    if (!input.startsWith("http://") && !input.startsWith("https://")) {
-        input = "https://www.google.com/search?q=" + encodeURIComponent(input);
+      requestAnimationFrame(animate);
     }
 
-    const encoded = __uv$config.encodeUrl(input);
-    const finalUrl = __uv$config.prefix + encoded;
-
-    const frame = document.getElementById("uv-frame");
-    frame.style.display = "block";
-    document.getElementById("launcher").style.display = "none";
-
-    frame.src = finalUrl;
-};
-
-function showLauncher() {
-    document.getElementById("launcher").style.display = "block";
-    document.getElementById("frame").style.display = "none";
-}
-
-function loadGames() {
-    document.getElementById("launcher").style.display = "none";
-    document.getElementById("frame").style.display = "block";
-    document.getElementById("frame").src = "games.html";
-}
-
-/* Settings */
-function openSettings() {
-    document.getElementById("settingsModal").style.display = "flex";
-    document.getElementById("bgType").value = type;
-    document.getElementById("speedControl").value = speed;
-}
-
-function saveSettings() {
-    type = document.getElementById("bgType").value;
-    speed = document.getElementById("speedControl").value;
-    localStorage.setItem("bgType", type);
-    localStorage.setItem("bgSpeed", speed);
     initParticles();
-    document.getElementById("settingsModal").style.display = "none";
-}
-</script>
+    animate();
 
+    // resize handler
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initParticles();
+    });
+
+    // ========== ULTRAVIOLET PROXY LOGIC ==========
+    const frame = document.getElementById('frame');
+    const launcherDiv = document.getElementById('launcher');
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+
+    // ensure UV is loaded and prefix is available (from uv.config.js)
+    function getUvPrefix() {
+      // uv.config is set by uv.config.js script
+      if (typeof __uv$config !== 'undefined' && __uv$config.prefix) {
+        return __uv$config.prefix;
+      }
+      console.warn('UV prefix not found, fallback to /service/');
+      return '/service/';  // fallback – should match uv.config.js
+    }
+
+    function encodeUrl(raw) {
+      if (typeof __uv$config !== 'undefined' && __uv$config.encodeUrl) {
+        return __uv$config.encodeUrl(raw);
+      }
+      // ultra simple fallback (btoa) – but UV's encode is better
+      return btoa(raw);   // not perfect, but keeps things working
+    }
+
+    searchBtn.addEventListener('click', () => {
+      let input = searchInput.value.trim();
+      if (!input) return;
+
+      // if it's NOT a valid http(s) link, treat as google search
+      if (!input.startsWith('http://') && !input.startsWith('https://')) {
+        // but also check if it looks like a domain (contains . and no spaces) -> assume https://
+        if (input.includes('.') && !input.includes(' ') && !input.startsWith('.')) {
+          input = 'https://' + input;
+        } else {
+          // search query
+          input = 'https://www.google.com/search?q=' + encodeURIComponent(input);
+        }
+      }
+
+      try {
+        // Use ultraviolet to encode and create proxy url
+        const prefix = getUvPrefix();
+        // __uv$config.encodeUrl might be the preferred way
+        let encoded;
+        if (typeof __uv$config !== 'undefined' && __uv$config.encodeUrl) {
+          encoded = __uv$config.encodeUrl(input);
+        } else {
+          // fallback manual encode (compatible with bare standard)
+          encoded = encodeURIComponent(input); // uv normally does better, but keep safe
+        }
+
+        const proxyUrl = prefix + encoded;
+
+        // show iframe, hide launcher, set src
+        frame.style.display = 'block';
+        launcherDiv.style.display = 'none';
+        frame.src = proxyUrl;
+      } catch (e) {
+        console.error('UV proxy error:', e);
+        alert('Failed to launch proxy. Check UV configuration.');
+      }
+    });
+
+    // optional: handle enter key in input
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchBtn.click();
+    });
+
+    // ========== UI FUNCTIONS ==========
+    window.showLauncher = function () {
+      launcherDiv.style.display = 'block';
+      frame.style.display = 'none';
+      // optional: clear the iframe src to stop media
+      // frame.src = 'about:blank';
+    };
+
+    window.loadGames = function () {
+      // you can change games.html to any game library or iframe embed
+      launcherDiv.style.display = 'none';
+      frame.style.display = 'block';
+      // if you want a local games page, but if not, you can redirect to a game site via proxy
+      // for now, we load a placeholder (or you can use uv to load a game site)
+      frame.src = 'https://www.crazygames.com/';  // example: direct (not proxied) – change to uv if you prefer
+      // but to keep it proxied, you could do the same as search but with fixed game site.
+      // we'll keep it simple, you can modify later.
+    };
+
+    window.openSettings = function () {
+      document.getElementById('settingsModal').style.display = 'flex';
+      document.getElementById('bgType').value = type;
+      document.getElementById('speedControl').value = speed;
+    };
+
+    window.saveSettings = function () {
+      type = document.getElementById('bgType').value;
+      speed = parseFloat(document.getElementById('speedControl').value);
+      localStorage.setItem('bgType', type);
+      localStorage.setItem('bgSpeed', speed);
+      initParticles();   // reinitialize with new speed
+      document.getElementById('settingsModal').style.display = 'none';
+    };
+
+    // close settings if click outside modal? (simple: just save button)
+    // optional: hide modal when clicking on background
+    document.getElementById('settingsModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('settingsModal')) {
+        // clicking backdrop does nothing? better to close? uncomment if you want:
+        // document.getElementById('settingsModal').style.display = 'none';
+      }
+    });
+
+    // extra: if launcher hidden and user wants to go back – topbar proxy button shows launcher
+    // ensure launcher becomes visible, and hide iframe
+    // (already implemented in showLauncher)
+
+    // small tweak: if the uv iframe shows error, maybe you'd want to see launcher again.
+    // but we leave as is.
+  </script>
+
+  <!-- ensure uv prefix is defined (fallback) -->
+  <script>
+    // ultra-minimal uv.config fallback if the file is missing
+    if (typeof __uv$config === 'undefined') {
+      window.__uv$config = {
+        prefix: '/service/',
+        encodeUrl: (str) => btoa(str),   // bare-bones, but works with many uv servers
+        decodeUrl: (str) => atob(str)
+      };
+      console.log('⚠️  uv.config.js not found – using fallback config');
+    }
+  </script>
 </body>
 </html>
