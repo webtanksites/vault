@@ -1,234 +1,275 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vault · ultraviolet proxy</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vault</title>
 
-  <style>
-    /* ... (keep all your existing styles) ... */
-  </style>
-  
-  <!-- Load UV scripts in correct order -->
-  <script src="/uv/uv.bundle.js"></script>
-  <script src="/uv/uv.config.js"></script>
-  <script src="/baremux/index.js"></script>
+<style>
+:root {
+    --glass: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.15);
+    --blur: blur(20px);
+    --accent: #8b5cf6;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: #0a0a0f;
+    color: white;
+    overflow: hidden;
+}
+
+/* Canvas Background */
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+
+/* Top Navigation */
+#topbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    backdrop-filter: var(--blur);
+    background: var(--glass);
+    border-bottom: 1px solid var(--border);
+}
+
+.logo {
+    font-weight: bold;
+    font-size: 18px;
+    letter-spacing: 2px;
+}
+
+.nav-buttons button {
+    margin-left: 15px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.nav-buttons button:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Center Launcher */
+#launcher {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    backdrop-filter: var(--blur);
+    background: var(--glass);
+    padding: 40px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    text-align: center;
+    width: 400px;
+}
+
+#searchInput {
+    width: 100%;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.6);
+    color: white;
+    font-size: 16px;
+    outline: none;
+}
+
+#searchBtn {
+    margin-top: 15px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Iframe */
+#frame {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 60px);
+    border: none;
+    display: none;
+}
+
+/* Settings Modal */
+#settingsModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #111;
+    padding: 30px;
+    border-radius: 15px;
+    width: 350px;
+    border: 1px solid var(--border);
+}
+
+select, input[type=range] {
+    width: 100%;
+    margin-top: 10px;
+}
+</style>
 </head>
-
 <body>
-  <canvas id="bg"></canvas>
 
-  <div id="topbar">
-    <div class="logo">✦ VAULT</div>
+<canvas id="bg"></canvas>
+
+<div id="topbar">
+    <div class="logo">VAULT</div>
     <div class="nav-buttons">
-      <button onclick="showLauncher()">Proxy</button>
-      <button onclick="loadGames()">Games</button>
-      <button onclick="openSettings()">Settings</button>
+        <button onclick="showLauncher()">Proxy</button>
+        <button onclick="loadGames()">Games</button>
+        <button onclick="openSettings()">Settings</button>
     </div>
-  </div>
+</div>
 
-  <!-- main proxy launcher panel -->
-  <div id="launcher">
-    <h2>🔍 search / proxy</h2>
-    <form id="uv-form" method="GET">
-      <input type="text" id="uv-address" placeholder="enter url or search..." autocomplete="off">
-      <input type="text" id="uv-search-engine" value="https://www.google.com/search?q=%s">
-      <button type="submit">launch in ultraviolet</button>
-    </form>
-    <p id="uv-error"></p>
-    <pre id="uv-error-code"></pre>
-  </div>
+<div id="launcher">
+    <h2>Search</h2>
+    <input id="searchInput" placeholder="Enter URL or search term">
+    <button id="searchBtn">Launch</button>
+</div>
 
-  <!-- uv iframe: proxy destination -->
-  <iframe id="uv-frame" allow="cross-origin-isolated; fullscreen" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads" allowfullscreen></iframe>
+<iframe id="frame"></iframe>
 
-  <!-- settings modal -->
-  <div id="settingsModal">
-    <!-- ... (keep your settings modal) ... -->
-  </div>
+<div id="settingsModal">
+    <div class="modal-content">
+        <h3>Background Settings</h3>
 
-  <script>
-    // ========== BACKGROUND CANVAS ==========
-    // ... (keep your existing background code) ...
+        <label>Animation Type</label>
+        <select id="bgType">
+            <option value="stars">Stars</option>
+            <option value="snow">Snow</option>
+            <option value="rain">Rain</option>
+        </select>
 
-    // ========== ULTRAVIOLET PROXY SETUP ==========
-    const form = document.getElementById("uv-form");
-    const address = document.getElementById("uv-address");
-    const searchEngine = document.getElementById("uv-search-engine");
-    const error = document.getElementById("uv-error");
-    const errorCode = document.getElementById("uv-error-code");
-    const frame = document.getElementById("uv-frame");
-    const launcherDiv = document.getElementById("launcher");
+        <label>Animation Speed</label>
+        <input type="range" id="speedControl" min="1" max="10">
 
-    // Wait for UV config to be ready
-    function waitForUVConfig() {
-      return new Promise((resolve) => {
-        if (window.__uv$config) {
-          resolve();
-        } else {
-          // Check every 100ms
-          const interval = setInterval(() => {
-            if (window.__uv$config) {
-              clearInterval(interval);
-              resolve();
-            }
-          }, 100);
-        }
-      });
-    }
+        <br><br>
+        <button onclick="saveSettings()">Save</button>
+    </div>
+</div>
 
-    // Register service worker with correct scope
-    async function registerSW() {
-      try {
-        // Unregister any existing service workers first
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (let registration of registrations) {
-          await registration.unregister();
-        }
+<script>
+const canvas = document.getElementById('bg');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-        // Register with the correct scope
-        const registration = await navigator.serviceWorker.register('/uv/uv.sw.js', {
-          scope: '/uv/'  // Must match the service worker location
+let particles = [];
+let type = localStorage.getItem("bgType") || "stars";
+let speed = localStorage.getItem("bgSpeed") || 3;
+
+function initParticles() {
+    particles = [];
+    for (let i = 0; i < 150; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 3,
+            velocity: Math.random() * speed
         });
-        
-        console.log('Service Worker registered with scope:', registration.scope);
-        
-        // Wait for the service worker to be ready
-        await navigator.serviceWorker.ready;
-        console.log('Service Worker is ready');
-        
-        return registration;
-      } catch (err) {
-        console.error('Service Worker registration failed:', err);
-        throw err;
-      }
+    }
+}
+
+function animate() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    particles.forEach(p => {
+        ctx.fillStyle = "white";
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+
+        if (type === "stars") p.y += p.velocity * 0.3;
+        if (type === "snow") p.y += p.velocity * 0.6;
+        if (type === "rain") p.y += p.velocity * 2;
+
+        if (p.y > canvas.height) p.y = 0;
+    });
+
+    requestAnimationFrame(animate);
+}
+
+initParticles();
+animate();
+
+/* Proxy Search */
+document.getElementById("searchBtn").onclick = () => {
+    let input = document.getElementById("searchInput").value.trim();
+    if (!input) return;
+
+    // Fix missing protocol
+    if (!input.startsWith("http://") && !input.startsWith("https://")) {
+        input = "https://www.google.com/search?q=" + encodeURIComponent(input);
     }
 
-    // Search utility function
-    function search(input, template) {
-      try {
-        return new URL(input).toString();
-      } catch (err) {
-        return template.replace('%s', encodeURIComponent(input));
-      }
-    }
+    const encoded = __uv$config.encodeUrl(input);
+    const finalUrl = __uv$config.prefix + encoded;
 
-    // Initialize BareMux connection
-    const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+    const frame = document.getElementById("uv-frame");
+    frame.style.display = "block";
+    document.getElementById("launcher").style.display = "none";
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
+    frame.src = finalUrl;
+};
 
-      // Disable button while processing
-      const submitBtn = event.target.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Loading...";
+function showLauncher() {
+    document.getElementById("launcher").style.display = "block";
+    document.getElementById("frame").style.display = "none";
+}
 
-      try {
-        // Wait for UV config
-        await waitForUVConfig();
-        
-        // Register service worker
-        await registerSW();
-        error.textContent = "";
-        errorCode.textContent = "";
+function loadGames() {
+    document.getElementById("launcher").style.display = "none";
+    document.getElementById("frame").style.display = "block";
+    document.getElementById("frame").src = "games.html";
+}
 
-        const url = search(address.value, searchEngine.value);
+/* Settings */
+function openSettings() {
+    document.getElementById("settingsModal").style.display = "flex";
+    document.getElementById("bgType").value = type;
+    document.getElementById("speedControl").value = speed;
+}
 
-        // Show frame and hide launcher
-        frame.style.display = "block";
-        launcherDiv.style.display = "none";
-        
-        // Setup Wisp connection
-        let wispUrl = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
-        
-        try {
-          const currentTransport = await connection.getTransport();
-          if (currentTransport !== "/epoxy/index.mjs") {
-            await connection.setTransport("/epoxy/index.mjs", [{ wisp: wispUrl }]);
-          }
-        } catch (err) {
-          console.warn("Transport setup failed, continuing anyway:", err);
-        }
-        
-        // Navigate to proxied URL
-        const proxiedUrl = __uv$config.prefix + __uv$config.encodeUrl(url);
-        console.log('Navigating to:', proxiedUrl);
-        frame.src = proxiedUrl;
-        
-      } catch (err) {
-        error.textContent = "Failed to launch proxy.";
-        errorCode.textContent = err.toString();
-        console.error(err);
-        
-        // Re-enable launcher on error
-        frame.style.display = "none";
-        launcherDiv.style.display = "block";
-      } finally {
-        // Re-enable button
-        submitBtn.disabled = false;
-        submitBtn.textContent = "launch in ultraviolet";
-      }
-    });
+function saveSettings() {
+    type = document.getElementById("bgType").value;
+    speed = document.getElementById("speedControl").value;
+    localStorage.setItem("bgType", type);
+    localStorage.setItem("bgSpeed", speed);
+    initParticles();
+    document.getElementById("settingsModal").style.display = "none";
+}
+</script>
 
-    // Handle enter key
-    address.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') form.dispatchEvent(new Event('submit'));
-    });
-
-    // ========== UI FUNCTIONS ==========
-    window.showLauncher = function () {
-      launcherDiv.style.display = 'block';
-      frame.style.display = 'none';
-      frame.src = 'about:blank';
-      address.value = '';
-    };
-
-    window.loadGames = function () {
-      launcherDiv.style.display = 'none';
-      frame.style.display = 'block';
-      
-      waitForUVConfig().then(() => {
-        // Proxy a games site through Ultraviolet
-        const gamesUrl = 'https://www.crazygames.com/';
-        frame.src = __uv$config.prefix + __uv$config.encodeUrl(gamesUrl);
-      });
-    };
-
-    window.openSettings = function () {
-      document.getElementById('settingsModal').style.display = 'flex';
-      document.getElementById('bgType').value = type;
-      document.getElementById('speedControl').value = speed;
-    };
-
-    window.saveSettings = function () {
-      type = document.getElementById('bgType').value;
-      speed = parseFloat(document.getElementById('speedControl').value);
-      localStorage.setItem('bgType', type);
-      localStorage.setItem('bgSpeed', speed);
-      initParticles();
-      document.getElementById('settingsModal').style.display = 'none';
-    };
-
-    // Close settings when clicking outside
-    document.getElementById('settingsModal').addEventListener('click', (e) => {
-      if (e.target === document.getElementById('settingsModal')) {
-        document.getElementById('settingsModal').style.display = 'none';
-      }
-    });
-
-    // Pre-emptive service worker unregistration on load
-    window.addEventListener('load', async () => {
-      try {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (let registration of registrations) {
-          await registration.unregister();
-          console.log('Unregistered existing service worker');
-        }
-      } catch (err) {
-        console.warn('Error unregistering service workers:', err);
-      }
-    });
-  </script>
 </body>
 </html>
