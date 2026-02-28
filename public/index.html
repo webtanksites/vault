@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vault · ultraviolet proxy</title>
+
   <style>
     :root {
       --glass: rgba(255, 255, 255, 0.08);
@@ -97,7 +98,11 @@
       letter-spacing: 1px;
     }
 
-    #searchInput {
+    #uv-form {
+      width: 100%;
+    }
+
+    #uv-address {
       width: 100%;
       padding: 15px 20px;
       border-radius: 40px;
@@ -109,12 +114,16 @@
       backdrop-filter: blur(10px);
     }
 
-    #searchInput:focus {
+    #uv-address:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
     }
 
-    #searchBtn {
+    #uv-search-engine {
+      display: none; /* Hidden but kept for functionality */
+    }
+
+    #uv-form button {
       margin-top: 18px;
       width: 100%;
       padding: 14px;
@@ -129,13 +138,23 @@
       letter-spacing: 0.5px;
     }
 
-    #searchBtn:hover {
+    #uv-form button:hover {
       background: #9f7aea;
       transform: scale(1.02);
     }
 
+    #uv-error {
+      color: #ff6b6b;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    #uv-error-code {
+      display: none;
+    }
+
     /* iframe – ultraviolet container */
-    #frame {
+    #uv-frame {
       position: fixed;
       top: 60px;
       left: 0;
@@ -204,9 +223,11 @@
       background: #a78bfa;
     }
   </style>
-  <!-- Ultraviolet superstructure (lib + config) -->
+  
+  <!-- Ultraviolet scripts -->
   <script src="/uv/uv.bundle.js"></script>
   <script src="/uv/uv.config.js"></script>
+  <script src="/baremux/index.js"></script>
 </head>
 
 <body>
@@ -224,12 +245,17 @@
   <!-- main proxy launcher panel -->
   <div id="launcher">
     <h2>🔍 search / proxy</h2>
-    <input id="searchInput" type="text" placeholder="enter url or search...">
-    <button id="searchBtn">launch in ultraviolet</button>
+    <form id="uv-form" method="GET">
+      <input type="text" id="uv-address" placeholder="enter url or search..." autocomplete="off">
+      <input type="text" id="uv-search-engine" value="https://www.google.com/search?q=%s">
+      <button type="submit">launch in ultraviolet</button>
+    </form>
+    <p id="uv-error"></p>
+    <pre id="uv-error-code"></pre>
   </div>
 
   <!-- uv iframe: proxy destination -->
-  <iframe id="frame" allowfullscreen></iframe>
+  <iframe id="uv-frame" allowfullscreen></iframe>
 
   <!-- settings modal -->
   <div id="settingsModal">
@@ -309,91 +335,91 @@
       initParticles();
     });
 
-    // ========== ULTRAVIOLET PROXY LOGIC ==========
-    const frame = document.getElementById('frame');
-    const launcherDiv = document.getElementById('launcher');
-    const searchInput = document.getElementById('searchInput');
-    const searchBtn = document.getElementById('searchBtn');
+    // ========== ULTRAVIOLET PROXY SETUP ==========
+    const form = document.getElementById("uv-form");
+    const address = document.getElementById("uv-address");
+    const searchEngine = document.getElementById("uv-search-engine");
+    const error = document.getElementById("uv-error");
+    const errorCode = document.getElementById("uv-error-code");
+    const frame = document.getElementById("uv-frame");
+    const launcherDiv = document.getElementById("launcher");
 
-    // ensure UV is loaded and prefix is available (from uv.config.js)
-    function getUvPrefix() {
-      // uv.config is set by uv.config.js script
-      if (typeof __uv$config !== 'undefined' && __uv$config.prefix) {
-        return __uv$config.prefix;
+    // Register service worker
+    async function registerSW() {
+      try {
+        await navigator.serviceWorker.register('/uv/uv.sw.js', {
+          scope: '/service/'
+        });
+      } catch (err) {
+        throw err;
       }
-      console.warn('UV prefix not found, fallback to /service/');
-      return '/service/';  // fallback – should match uv.config.js
     }
 
-    function encodeUrl(raw) {
-      if (typeof __uv$config !== 'undefined' && __uv$config.encodeUrl) {
-        return __uv$config.encodeUrl(raw);
+    // Search utility function
+    function search(input, template) {
+      try {
+        return new URL(input).toString();
+      } catch (err) {
+        // If input is not a valid URL, treat as search query
+        return template.replace('%s', encodeURIComponent(input));
       }
-      // ultra simple fallback (btoa) – but UV's encode is better
-      return btoa(raw);   // not perfect, but keeps things working
     }
 
-    searchBtn.addEventListener('click', () => {
-      let input = searchInput.value.trim();
-      if (!input) return;
+    // Initialize BareMux connection
+    const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
 
-      // if it's NOT a valid http(s) link, treat as google search
-      if (!input.startsWith('http://') && !input.startsWith('https://')) {
-        // but also check if it looks like a domain (contains . and no spaces) -> assume https://
-        if (input.includes('.') && !input.includes(' ') && !input.startsWith('.')) {
-          input = 'https://' + input;
-        } else {
-          // search query
-          input = 'https://www.google.com/search?q=' + encodeURIComponent(input);
-        }
-      }
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
 
       try {
-        // Use ultraviolet to encode and create proxy url
-        const prefix = getUvPrefix();
-        // __uv$config.encodeUrl might be the preferred way
-        let encoded;
-        if (typeof __uv$config !== 'undefined' && __uv$config.encodeUrl) {
-          encoded = __uv$config.encodeUrl(input);
-        } else {
-          // fallback manual encode (compatible with bare standard)
-          encoded = encodeURIComponent(input); // uv normally does better, but keep safe
-        }
-
-        const proxyUrl = prefix + encoded;
-
-        // show iframe, hide launcher, set src
-        frame.style.display = 'block';
-        launcherDiv.style.display = 'none';
-        frame.src = proxyUrl;
-      } catch (e) {
-        console.error('UV proxy error:', e);
-        alert('Failed to launch proxy. Check UV configuration.');
+        await registerSW();
+        error.textContent = ""; // Clear any previous errors
+      } catch (err) {
+        error.textContent = "Failed to register service worker.";
+        errorCode.textContent = err.toString();
+        throw err;
       }
+
+      const url = search(address.value, searchEngine.value);
+
+      // Show frame and hide launcher
+      frame.style.display = "block";
+      launcherDiv.style.display = "none";
+      
+      // Setup Wisp connection
+      let wispUrl = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
+      
+      try {
+        if ((await connection.getTransport()) !== "/epoxy/index.mjs") {
+          await connection.setTransport("/epoxy/index.mjs", [{ wisp: wispUrl }]);
+        }
+      } catch (err) {
+        console.warn("Transport setup failed, continuing anyway:", err);
+      }
+      
+      // Navigate to proxied URL
+      frame.src = __uv$config.prefix + __uv$config.encodeUrl(url);
     });
 
-    // optional: handle enter key in input
-    searchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') searchBtn.click();
+    // Handle enter key
+    address.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') form.dispatchEvent(new Event('submit'));
     });
 
     // ========== UI FUNCTIONS ==========
     window.showLauncher = function () {
       launcherDiv.style.display = 'block';
       frame.style.display = 'none';
-      // optional: clear the iframe src to stop media
-      // frame.src = 'about:blank';
+      frame.src = 'about:blank'; // Clear the frame
+      address.value = ''; // Clear input
     };
 
     window.loadGames = function () {
-      // you can change games.html to any game library or iframe embed
       launcherDiv.style.display = 'none';
       frame.style.display = 'block';
-      // if you want a local games page, but if not, you can redirect to a game site via proxy
-      // for now, we load a placeholder (or you can use uv to load a game site)
-      frame.src = 'https://www.crazygames.com/';  // example: direct (not proxied) – change to uv if you prefer
-      // but to keep it proxied, you could do the same as search but with fixed game site.
-      // we'll keep it simple, you can modify later.
+      // Proxy a games site through Ultraviolet
+      const gamesUrl = 'https://www.crazygames.com/';
+      frame.src = __uv$config.prefix + __uv$config.encodeUrl(gamesUrl);
     };
 
     window.openSettings = function () {
@@ -407,38 +433,16 @@
       speed = parseFloat(document.getElementById('speedControl').value);
       localStorage.setItem('bgType', type);
       localStorage.setItem('bgSpeed', speed);
-      initParticles();   // reinitialize with new speed
+      initParticles();
       document.getElementById('settingsModal').style.display = 'none';
     };
 
-    // close settings if click outside modal? (simple: just save button)
-    // optional: hide modal when clicking on background
+    // Close settings when clicking outside
     document.getElementById('settingsModal').addEventListener('click', (e) => {
       if (e.target === document.getElementById('settingsModal')) {
-        // clicking backdrop does nothing? better to close? uncomment if you want:
-        // document.getElementById('settingsModal').style.display = 'none';
+        document.getElementById('settingsModal').style.display = 'none';
       }
     });
-
-    // extra: if launcher hidden and user wants to go back – topbar proxy button shows launcher
-    // ensure launcher becomes visible, and hide iframe
-    // (already implemented in showLauncher)
-
-    // small tweak: if the uv iframe shows error, maybe you'd want to see launcher again.
-    // but we leave as is.
-  </script>
-
-  <!-- ensure uv prefix is defined (fallback) -->
-  <script>
-    // ultra-minimal uv.config fallback if the file is missing
-    if (typeof __uv$config === 'undefined') {
-      window.__uv$config = {
-        prefix: '/service/',
-        encodeUrl: (str) => btoa(str),   // bare-bones, but works with many uv servers
-        decodeUrl: (str) => atob(str)
-      };
-      console.log('⚠️  uv.config.js not found – using fallback config');
-    }
   </script>
 </body>
 </html>
